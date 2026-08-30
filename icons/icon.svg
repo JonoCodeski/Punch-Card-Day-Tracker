@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Punch Card">
+  <rect width="512" height="512" fill="#14161b"/>
+  <rect x="72" y="104" width="368" height="304" rx="34" fill="#f2efe7"/>
+  <g fill="#ff9436">
+    <circle cx="146" cy="182" r="30"/><circle cx="219" cy="182" r="30"/>
+    <circle cx="292" cy="182" r="30"/><circle cx="365" cy="182" r="30"/>
+    <circle cx="146" cy="256" r="30"/><circle cx="219" cy="256" r="30"/>
+    <circle cx="292" cy="256" r="30"/>
+  </g>
+  <g fill="none" stroke="#cfc9bb" stroke-width="9">
+    <circle cx="365" cy="256" r="26"/>
+    <circle cx="146" cy="330" r="26"/><circle cx="219" cy="330" r="26"/>
+    <circle cx="292" cy="330" r="26"/><circle cx="365" cy="330" r="26"/>
+  </g>
+</svg>

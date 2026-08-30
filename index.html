@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Punch Card — Swing Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="description" content="Tick off the days of your work swing, one punch at a time.">
+<meta name="theme-color" content="#14161b">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Punch Card">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <button id="swingsBtn" class="icon-btn" aria-label="All swings" aria-haspopup="dialog">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+  </button>
+  <div class="topbar-title">
+    <h1 id="swingName">Punch Card</h1>
+    <p id="swingSub">No swing yet</p>
+  </div>
+  <button id="menuBtn" class="icon-btn" aria-label="Settings and data" aria-haspopup="dialog">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+  </button>
+</header>
+
+<main id="main">
+
+  <section id="empty" class="empty" hidden>
+    <div class="empty-art" aria-hidden="true">
+      <span class="hole"></span><span class="hole"></span><span class="hole punched"></span>
+      <span class="hole punched"></span><span class="hole"></span><span class="hole"></span>
+    </div>
+    <h2>Start your first swing</h2>
+    <p>Set how many days you're on, then punch one out each day.</p>
+    <button class="btn primary big" data-action="new-swing">New swing</button>
+  </section>
+
+  <section id="dash" class="dash" hidden>
+    <div class="progress-card">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle id="ringFill" class="ring-fill" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="ring-label">
+          <strong id="doneCount">0</strong>
+          <span id="ofCount">of 14</span>
+        </div>
+      </div>
+      <dl class="stats">
+        <div><dt>Punched</dt><dd id="statDone">0 days</dd></div>
+        <div><dt>To go</dt><dd id="statLeft">14 days</dd></div>
+        <div><dt>Last day</dt><dd id="statEnd">—</dd></div>
+      </dl>
+    </div>
+
+    <div class="grid-head">
+      <h2>Days</h2>
+      <button class="btn ghost sm" data-action="punch-today" id="todayBtn">Punch today</button>
+    </div>
+
+    <div id="grid" class="grid" role="group" aria-label="Swing days"></div>
+
+    <div id="doneBanner" class="done-banner" hidden>
+      <div>
+        <strong>Swing complete!</strong>
+        <span>Every day punched. Go home.</span>
+      </div>
+      <button class="btn primary sm" data-action="new-swing">Next swing</button>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn ghost" data-action="edit-swing">Edit swing</button>
+      <button class="btn ghost" data-action="new-swing">New swing</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Sheet: swing list -->
+<div class="sheet-backdrop" id="backdrop" hidden></div>
+
+<section class="sheet" id="swingsSheet" role="dialog" aria-modal="true" aria-labelledby="swingsSheetTitle" hidden>
+  <div class="sheet-grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="swingsSheetTitle">Your swings</h2>
+    <button class="btn ghost sm" data-action="new-swing">New</button>
+  </div>
+  <ul id="swingList" class="swing-list"></ul>
+</section>
+
+<!-- Sheet: edit / create -->
+<section class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editSheetTitle" hidden>
+  <div class="sheet-grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="editSheetTitle">New swing</h2>
+    <button class="btn ghost sm" data-action="close-sheets">Cancel</button>
+  </div>
+  <form id="editForm" class="form">
+    <label class="field">
+      <span>Name</span>
+      <input id="fName" type="text" maxlength="40" placeholder="Swing 1" autocomplete="off" enterkeyhint="done">
+    </label>
+
+    <div class="field">
+      <span>Length</span>
+      <div class="stepper">
+        <button type="button" class="step" data-step="-1" aria-label="One day fewer">−</button>
+        <input id="fLength" type="number" min="1" max="90" inputmode="numeric" value="14" aria-label="Swing length in days">
+        <button type="button" class="step" data-step="1" aria-label="One day more">+</button>
+      </div>
+      <div class="presets" id="presets">
+        <button type="button" data-len="7">7</button>
+        <button type="button" data-len="14">14</button>
+        <button type="button" data-len="21">21</button>
+        <button type="button" data-len="28">28</button>
+      </div>
+    </div>
+
+    <label class="field">
+      <span>Start date</span>
+      <input id="fStart" type="date">
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn primary big" id="saveBtn">Start swing</button>
+      <button type="button" class="btn danger" id="deleteBtn" hidden>Delete swing</button>
+    </div>
+  </form>
+</section>
+
+<!-- Sheet: data / settings -->
+<section class="sheet" id="dataSheet" role="dialog" aria-modal="true" aria-labelledby="dataSheetTitle" hidden>
+  <div class="sheet-grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="dataSheetTitle">Data</h2>
+    <button class="btn ghost sm" data-action="close-sheets">Done</button>
+  </div>
+  <div class="form">
+    <p class="hint">Everything is stored on this device only. Back it up before clearing Safari data or switching phones.</p>
+    <div class="form-actions stack">
+      <button class="btn ghost" data-action="export">Export backup</button>
+      <button class="btn ghost" data-action="import">Import backup</button>
+      <button class="btn danger" data-action="wipe">Erase everything</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <p class="hint tiny">Add to Home Screen from Safari's share menu for a full-screen app that works offline.</p>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
