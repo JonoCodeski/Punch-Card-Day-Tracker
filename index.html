@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Punch Card — Swing Tracker</title>
+<title>Punch Card — FIFO Swing Tracker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="description" content="Tick off the days of your work swing, one punch at a time.">
+<meta name="description" content="Your FIFO roster, your swing, punched out day by day.">
 <meta name="theme-color" content="#14161b">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,32 +21,40 @@
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <header class="topbar">
-  <button id="swingsBtn" class="icon-btn" aria-label="All swings" aria-haspopup="dialog">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+  <button id="crewBtn" class="icon-btn" aria-label="Switch person" aria-haspopup="dialog">
+    <span class="crew-dot" id="crewDot"></span>
   </button>
   <div class="topbar-title">
-    <h1 id="swingName">Punch Card</h1>
-    <p id="swingSub">No swing yet</p>
+    <h1 id="barTitle">Punch Card</h1>
+    <p id="barSub">—</p>
   </div>
-  <button id="menuBtn" class="icon-btn" aria-label="Settings and data" aria-haspopup="dialog">
+  <button id="menuBtn" class="icon-btn" aria-label="Data and backups" aria-haspopup="dialog">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
   </button>
 </header>
 
 <main id="main">
 
-  <section id="empty" class="empty" hidden>
-    <div class="empty-art" aria-hidden="true">
-      <span class="hole"></span><span class="hole"></span><span class="hole punched"></span>
-      <span class="hole punched"></span><span class="hole"></span><span class="hole"></span>
-    </div>
-    <h2>Start your first swing</h2>
-    <p>Set how many days you're on, then punch one out each day.</p>
-    <button class="btn primary big" data-action="new-swing">New swing</button>
-  </section>
+  <!-- ============ SWING ============ -->
+  <section id="tab-swing" class="tab">
 
-  <section id="dash" class="dash" hidden>
-    <div class="progress-card">
+    <div class="swing-nav">
+      <button class="nav-btn" data-swing-step="-1" aria-label="Previous swing">‹</button>
+      <div class="swing-nav-label">
+        <strong id="swingRange">—</strong>
+        <span id="swingWhen">—</span>
+      </div>
+      <button class="nav-btn" data-swing-step="1" aria-label="Next swing">›</button>
+    </div>
+    <button class="btn ghost sm centred" id="backToNow" hidden>Back to now</button>
+
+    <div class="rr-card" id="rrCard" hidden>
+      <span class="rr-eyebrow">On R&amp;R</span>
+      <strong id="rrHead">—</strong>
+      <p id="rrSub">—</p>
+    </div>
+
+    <div class="progress-card" id="progressCard">
       <div class="ring-wrap">
         <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
           <circle class="ring-track" cx="60" cy="60" r="52"></circle>
@@ -54,19 +62,19 @@
         </svg>
         <div class="ring-label">
           <strong id="doneCount">0</strong>
-          <span id="ofCount">of 14</span>
+          <span id="ofCount">of 0</span>
         </div>
       </div>
       <dl class="stats">
-        <div><dt>Punched</dt><dd id="statDone">0 days</dd></div>
-        <div><dt>To go</dt><dd id="statLeft">14 days</dd></div>
-        <div><dt>Last day</dt><dd id="statEnd">—</dd></div>
+        <div><dt>Punched</dt><dd id="statDone">—</dd></div>
+        <div><dt>To go</dt><dd id="statLeft">—</dd></div>
+        <div><dt>Fly out</dt><dd id="statOut">—</dd></div>
       </dl>
     </div>
 
     <div class="grid-head">
-      <h2>Days</h2>
-      <button class="btn ghost sm" data-action="punch-today" id="todayBtn">Punch today</button>
+      <h2 id="gridHeading">Days</h2>
+      <button class="btn ghost sm" id="todayPunchBtn" hidden>Punch today</button>
     </div>
 
     <div id="grid" class="grid" role="group" aria-label="Swing days"></div>
@@ -74,72 +82,128 @@
     <div id="doneBanner" class="done-banner" hidden>
       <div>
         <strong>Swing complete!</strong>
-        <span>Every day punched. Go home.</span>
+        <span id="doneSub">Every day punched.</span>
       </div>
-      <button class="btn primary sm" data-action="new-swing">Next swing</button>
     </div>
 
-    <div class="footer-actions">
-      <button class="btn ghost" data-action="edit-swing">Edit swing</button>
-      <button class="btn ghost" data-action="new-swing">New swing</button>
+    <p class="hint tiny" id="noRoster" hidden>Set a cycle on the Roster tab to light this up.</p>
+  </section>
+
+  <!-- ============ CALENDAR ============ -->
+  <section id="tab-calendar" class="tab" hidden>
+    <label class="field">
+      <span>Check a date</span>
+      <input type="date" id="checkDate">
+    </label>
+
+    <div class="cal-head">
+      <div class="cal-title" id="calTitle">—</div>
+      <div class="nav-btns">
+        <button class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+        <button class="nav-btn wide" id="thisMonth">Today</button>
+        <button class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
+      </div>
+    </div>
+
+    <div class="cal" id="cal"></div>
+
+    <div class="legend">
+      <span><i class="chip days"></i> Day shift</span>
+      <span><i class="chip nights"></i> Night shift</span>
+      <span><i class="chip off"></i> R&amp;R</span>
+      <span><i class="chip today"></i> Today</span>
+      <span><i class="chip plane">✈</i> Fly in / out</span>
+    </div>
+    <div class="cal-people" id="calPeople"></div>
+    <p class="hint tiny">Tap any day for the full rundown.</p>
+  </section>
+
+  <!-- ============ ROSTER ============ -->
+  <section id="tab-roster" class="tab" hidden>
+    <div class="people-bar" id="peopleBar"></div>
+
+    <div class="card">
+      <h2>Person</h2>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="fName" maxlength="24" autocomplete="off" enterkeyhint="done" placeholder="Me">
+      </label>
+      <label class="field">
+        <span>First day of cycle (fly-in)</span>
+        <input type="date" id="fStart">
+      </label>
+      <p class="hint">The cycle below repeats forwards and backwards from this date, so it only ever needs setting once.</p>
+    </div>
+
+    <div class="card">
+      <h2>Swing cycle</h2>
+      <div class="blocks" id="blocks"></div>
+      <button class="btn ghost" id="addBlock">+ Add block</button>
+      <p class="cycle-summary" id="cycleSummary"></p>
+      <div class="presets" id="presets" role="group" aria-label="Common rosters">
+        <button type="button" data-blocks='[["days",14],["off",14]]'>2/2 — 14:14</button>
+        <button type="button" data-blocks='[["days",14],["off",7]]'>2/1 — 14:7</button>
+        <button type="button" data-blocks='[["days",8],["off",6]]'>8:6</button>
+        <button type="button" data-blocks='[["days",7],["nights",7],["off",14]]'>7D:7N:14 off</button>
+        <button type="button" data-blocks='[["days",7],["nights",7],["off",7]]'>7D:7N:7 off</button>
+        <button type="button" data-blocks='[["days",8],["off",6],["nights",7],["off",7]]'>8:6 / 7:7 D&amp;N</button>
+        <button type="button" data-blocks='[["days",28],["off",7]]'>4/1 — 28:7</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Crew</h2>
+      <p class="hint">Add the people whose swings you want to see beside yours on the calendar.</p>
+      <div class="form-actions stack">
+        <button class="btn ghost" data-action="add-person">+ Add person</button>
+        <button class="btn danger" id="removePerson">Remove this person</button>
+      </div>
     </div>
   </section>
 
 </main>
 
-<!-- Sheet: swing list -->
+<nav class="tabbar" role="tablist" aria-label="Sections">
+  <button class="tab-btn active" data-tab="swing" role="tab" aria-selected="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>
+    <span>Swing</span>
+  </button>
+  <button class="tab-btn" data-tab="calendar" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+    <span>Calendar</span>
+  </button>
+  <button class="tab-btn" data-tab="roster" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h9"/></svg>
+    <span>Roster</span>
+  </button>
+</nav>
+
 <div class="sheet-backdrop" id="backdrop" hidden></div>
 
-<section class="sheet" id="swingsSheet" role="dialog" aria-modal="true" aria-labelledby="swingsSheetTitle" hidden>
+<!-- Sheet: crew switcher -->
+<section class="sheet" id="crewSheet" role="dialog" aria-modal="true" aria-labelledby="crewSheetTitle" hidden>
   <div class="sheet-grab" aria-hidden="true"></div>
   <div class="sheet-head">
-    <h2 id="swingsSheetTitle">Your swings</h2>
-    <button class="btn ghost sm" data-action="new-swing">New</button>
+    <h2 id="crewSheetTitle">Crew</h2>
+    <button class="btn ghost sm" data-action="add-person">+ Add</button>
   </div>
-  <ul id="swingList" class="swing-list"></ul>
+  <ul id="crewList" class="crew-list"></ul>
 </section>
 
-<!-- Sheet: edit / create -->
-<section class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editSheetTitle" hidden>
+<!-- Sheet: day detail / date check -->
+<section class="sheet" id="daySheet" role="dialog" aria-modal="true" aria-labelledby="daySheetTitle" hidden>
   <div class="sheet-grab" aria-hidden="true"></div>
   <div class="sheet-head">
-    <h2 id="editSheetTitle">New swing</h2>
-    <button class="btn ghost sm" data-action="close-sheets">Cancel</button>
+    <h2 id="daySheetTitle">—</h2>
+    <button class="btn ghost sm" data-action="close-sheets">Done</button>
   </div>
-  <form id="editForm" class="form">
-    <label class="field">
-      <span>Name</span>
-      <input id="fName" type="text" maxlength="40" placeholder="Swing 1" autocomplete="off" enterkeyhint="done">
-    </label>
-
-    <div class="field">
-      <span>Length</span>
-      <div class="stepper">
-        <button type="button" class="step" data-step="-1" aria-label="One day fewer">−</button>
-        <input id="fLength" type="number" min="1" max="90" inputmode="numeric" value="14" aria-label="Swing length in days">
-        <button type="button" class="step" data-step="1" aria-label="One day more">+</button>
-      </div>
-      <div class="presets" id="presets">
-        <button type="button" data-len="7">7</button>
-        <button type="button" data-len="14">14</button>
-        <button type="button" data-len="21">21</button>
-        <button type="button" data-len="28">28</button>
-      </div>
-    </div>
-
-    <label class="field">
-      <span>Start date</span>
-      <input id="fStart" type="date">
-    </label>
-
-    <div class="form-actions">
-      <button type="submit" class="btn primary big" id="saveBtn">Start swing</button>
-      <button type="button" class="btn danger" id="deleteBtn" hidden>Delete swing</button>
-    </div>
-  </form>
+  <div id="dayVerdicts" class="verdicts"></div>
+  <div class="form-actions" id="dayPunchWrap" hidden>
+    <button class="btn primary big" id="dayPunchBtn">Punch this day</button>
+  </div>
 </section>
 
-<!-- Sheet: data / settings -->
+<!-- Sheet: data -->
 <section class="sheet" id="dataSheet" role="dialog" aria-modal="true" aria-labelledby="dataSheetTitle" hidden>
   <div class="sheet-grab" aria-hidden="true"></div>
   <div class="sheet-head">
@@ -147,14 +211,14 @@
     <button class="btn ghost sm" data-action="close-sheets">Done</button>
   </div>
   <div class="form">
-    <p class="hint">Everything is stored on this device only. Back it up before clearing Safari data or switching phones.</p>
+    <p class="hint">Rosters and punches are stored on this device only. Back them up before clearing Safari data or switching phones.</p>
     <div class="form-actions stack">
       <button class="btn ghost" data-action="export">Export backup</button>
       <button class="btn ghost" data-action="import">Import backup</button>
       <button class="btn danger" data-action="wipe">Erase everything</button>
     </div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
-    <p class="hint tiny">Add to Home Screen from Safari's share menu for a full-screen app that works offline.</p>
+    <p class="hint tiny">Add to Home Screen from Safari's share menu for a full-screen app that works with no signal.</p>
   </div>
 </section>
 

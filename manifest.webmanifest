@@ -1,7 +1,7 @@
 {
   "name": "Punch Card — Swing Tracker",
   "short_name": "Punch Card",
-  "description": "Tick off the days of your work swing, one punch at a time.",
+  "description": "Your FIFO roster, your swing, punched out day by day.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

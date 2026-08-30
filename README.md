@@ -1,22 +1,44 @@
-# Punch Card — Swing Day Tracker
+# Punch Card — FIFO Swing Tracker
 
-A tiny offline web app for ticking off the days of a work swing. Tap a day to punch
-it out, watch the ring fill, and get confetti when the swing is done. No accounts,
-no server — everything is saved in your device's browser storage.
+A tiny offline web app for FIFO work. Set your roster cycle once and it works out
+every swing from now until forever — then you punch out the days one at a time.
+No accounts, no server; everything is saved in your device's browser storage.
 
-- Any number of swings, each with its own name, length (1–90 days) and start date
-- Tap-to-punch grid with dates and a highlighted "today"
-- Progress ring, days-to-go and last-day countdown
-- Backup and restore as a JSON file
-- Installs to the iOS home screen and works offline
+## How it works
+
+Your **roster** is the source of truth. You describe one cycle as a list of blocks
+(14 days on → 14 off, or 7 days → 7 nights → 14 off, whatever yours is) and anchor
+it to a single fly-in date. The cycle repeats forwards and backwards from there, so
+swings never need creating by hand.
+
+**Punches are stored against calendar dates**, not against a swing number. Fix a
+wrong fly-in date or add a night block later and the days you already ticked stay
+attached to the dates you actually worked.
+
+### Swing tab
+The swing you're in right now, as a grid of tap-to-punch days. Each day shows its
+real date and shift colour, day 1 is marked ✈ fly in, the last day ✈ fly out. A ring
+tracks your progress, and the last punch of a swing sets off the confetti. Arrows step
+back and forward through swings for anything you forgot to tick. On R&R it flips to a
+countdown to your next fly-in and shows the coming swing.
+
+### Calendar tab
+A month at a glance for everyone you've added — ochre day shifts, indigo nights,
+green R&R, ✈ on travel days, ✓ on days you've punched. Tap any day, or use the date
+field, for the full rundown: who's on, which day of the swing, and what changes next.
+
+### Roster tab
+Name, fly-in date, and the block builder, plus one-tap presets for the usual
+rosters (14:14, 14:7, 8:6, 7D:7N:14 off, 28:7 and more). Add crew here to see their
+swings beside yours on the calendar.
 
 ## Files
 
 | File | What it is |
 | --- | --- |
-| `index.html` | The whole UI |
+| `index.html` | The whole UI — three tabs |
 | `styles.css` | Styling |
-| `app.js` | State, storage, rendering |
+| `app.js` | Roster maths, state, storage, rendering |
 | `sw.js` | Service worker — offline caching |
 | `manifest.webmanifest` | Home-screen app metadata |
 | `icons/` | App icons |
@@ -42,10 +64,14 @@ All paths are relative, so it works from a repo subfolder without any config.
 
 ## About your data
 
-Swings are stored in `localStorage` on the device that punched them. They are not
-synced anywhere. Clearing Safari's website data, or deleting the home-screen app,
-can remove them — use **⋮ → Export backup** now and then, and **Import backup** to
-restore onto a new phone.
+Rosters and punches are stored in `localStorage` on the device that made them. They
+are not synced anywhere. Clearing Safari's website data, or deleting the home-screen
+app, can remove them — use **⋮ → Export backup** now and then, and **Import backup**
+to restore onto a new phone.
+
+Swings from the older hand-made version are migrated automatically on first load:
+every tick is re-keyed to its date, and a cycle is seeded from the most recent swing
+so it only needs its off-block adjusting. Old backup files still import too.
 
 ## Updating
 
