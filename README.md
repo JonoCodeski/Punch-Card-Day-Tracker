@@ -20,7 +20,7 @@ The swing you're in right now, as a grid of tap-to-punch days. Each day shows it
 real date and shift colour, and day 1 is marked ✈ fly in. A ring tracks your progress,
 and the last punch of a swing sets off the confetti. Arrows step back and forward
 through swings for anything you forgot to tick. On R&R it flips to a countdown to your
-next fly-in and shows the coming swing. The name pill at the top switches person.
+next fly-in and shows the coming swing.
 
 **Travel days.** You fly in on day 1 and work through to the last day on, then travel
 home the next morning — so the fly-out day is the first day of R&R, not the last day
@@ -45,7 +45,8 @@ rosters (14:14, 14:7, 8:6, 7D:7N:14 off, 28:7 and more).
 
 ### Settings tab
 Switch or add the crew whose swings sit beside yours on the calendar, back your data
-up, and erase it.
+up, and erase it. Whoever is selected here is who the Swing tab punches for; the
+chips at the top of the Roster tab switch between them too.
 
 ## Files
 

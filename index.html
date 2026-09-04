@@ -25,13 +25,6 @@
   <!-- ============ SWING ============ -->
   <section id="tab-swing" class="tab">
 
-    <button class="who-pill" id="whoPill" aria-haspopup="dialog">
-      <i id="pillDot"></i>
-      <span class="who-name" id="pillName">Me</span>
-      <span class="who-status" id="pillStatus">—</span>
-      <span class="who-chev" aria-hidden="true">›</span>
-    </button>
-
     <div class="swing-nav">
       <button class="nav-btn" data-swing-step="-1" aria-label="Previous swing">‹</button>
       <div class="swing-nav-label">
@@ -209,16 +202,6 @@
 </nav>
 
 <div class="sheet-backdrop" id="backdrop" hidden></div>
-
-<!-- Sheet: crew switcher -->
-<section class="sheet" id="crewSheet" role="dialog" aria-modal="true" aria-labelledby="crewSheetTitle" hidden>
-  <div class="sheet-grab" aria-hidden="true"></div>
-  <div class="sheet-head">
-    <h2 id="crewSheetTitle">Who's punching</h2>
-    <button class="btn ghost sm" data-action="close-sheets">Done</button>
-  </div>
-  <ul id="crewList" class="crew-list"></ul>
-</section>
 
 <!-- Sheet: day detail / date check -->
 <section class="sheet" id="daySheet" role="dialog" aria-modal="true" aria-labelledby="daySheetTitle" hidden>

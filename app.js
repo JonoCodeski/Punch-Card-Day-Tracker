@@ -26,12 +26,12 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {};
-  ['whoPill','pillDot','pillName','pillStatus','swingRange','swingWhen','backToNow','rrCard','rrHead',
-   'rrSub','progressCard','ringFill','doneCount','ofCount','statDone','statLeft','statOut','footyPct',
-   'footyLabel','quarters','gridHeading','todayPunchBtn','grid','doneBanner','doneSub','noRoster',
-   'checkDate','calTitle','cal','calPeople','peopleBar','fName','fStart','blocks','cycleSummary',
-   'presets','addBlock','removePerson','backdrop','crewSheet','crewList','crewListSettings',
-   'daySheet','daySheetTitle','dayVerdicts','dayPunchWrap','dayPunchBtn','importFile','toast','confetti']
+  ['swingRange','swingWhen','backToNow','rrCard','rrHead','rrSub','progressCard','ringFill',
+   'doneCount','ofCount','statDone','statLeft','statOut','footyPct','footyLabel','quarters',
+   'gridHeading','todayPunchBtn','grid','doneBanner','doneSub','noRoster','checkDate','calTitle',
+   'cal','calPeople','peopleBar','fName','fStart','blocks','cycleSummary','presets','addBlock',
+   'removePerson','backdrop','crewListSettings','daySheet','daySheetTitle','dayVerdicts',
+   'dayPunchWrap','dayPunchBtn','importFile','toast','confetti']
     .forEach(function (id) { el[id] = $(id); });
 
   /* ==================== dates ==================== */
@@ -291,23 +291,6 @@
   function render() {
     var p = active();
     if (!p) return;
-
-    el.pillDot.style.background = colorOf(p);
-    el.pillName.textContent = p.name;
-
-    var b = blockAt(p, today);
-    if (!b) {
-      el.pillStatus.textContent = 'No cycle set';
-    } else if (b.type === 'off') {
-      var n = nextSwing(p, today);
-      el.pillStatus.textContent = n
-        ? 'R&R · fly in ' + fmtMed(n.start)
-        : 'R&R';
-    } else {
-      var sw = swingAt(p, today);
-      el.pillStatus.textContent = 'Day ' + (diffDays(sw.start, today) + 1) + ' of ' + sw.len +
-        ' · ' + (b.type === 'nights' ? 'nights' : 'days');
-    }
 
     renderSwing(p);
     renderCalendar();
@@ -695,11 +678,8 @@
       li.appendChild(btn);
       frag.appendChild(li);
     });
-    var copy = frag.cloneNode(true);   /* clone first — appending empties the fragment */
-    el.crewList.innerHTML = '';
-    el.crewList.appendChild(frag);
     el.crewListSettings.innerHTML = '';
-    el.crewListSettings.appendChild(copy);
+    el.crewListSettings.appendChild(frag);
   }
 
   function esc(s) {
@@ -732,7 +712,6 @@
   }
   function closeSheets() {
     el.backdrop.hidden = true;
-    el.crewSheet.hidden = true;
     el.daySheet.hidden = true;
     document.body.style.overflow = '';
   }
@@ -922,7 +901,6 @@
   }
 
   el.backToNow.addEventListener('click', function () { cursorISO = null; render(); });
-  el.whoPill.addEventListener('click', function () { renderCrew(); openSheet(el.crewSheet); });
   el.backdrop.addEventListener('click', closeSheets);
 
   el.fName.addEventListener('input', function () {
@@ -930,7 +908,6 @@
     if (!p) return;
     p.name = el.fName.value.slice(0, 24);
     save();
-    el.pillName.textContent = p.name;
     renderPeopleBar();
     renderCrew();
     renderCalendar();
