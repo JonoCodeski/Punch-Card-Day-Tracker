@@ -1,5 +1,5 @@
 /* Offline shell. Bump CACHE when files change so devices pick up the new version. */
-var CACHE = 'punchcard-v5';
+var CACHE = 'punchcard-v6';
 var ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon.svg'];
 
 self.addEventListener('install', function (e) {
