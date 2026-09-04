@@ -26,12 +26,12 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {};
-  ['crewDot','barTitle','barSub','swingRange','swingWhen','backToNow','rrCard','rrHead','rrSub',
-   'progressCard','ringFill','doneCount','ofCount','statDone','statLeft','statOut','gridHeading',
-   'todayPunchBtn','grid','doneBanner','doneSub','noRoster','checkDate','calTitle','cal','calPeople',
-   'peopleBar','fName','fStart','blocks','cycleSummary','presets','addBlock','removePerson',
-   'backdrop','crewSheet','crewList','daySheet','daySheetTitle','dayVerdicts','dayPunchWrap',
-   'dayPunchBtn','dataSheet','importFile','toast','confetti']
+  ['whoPill','pillDot','pillName','pillStatus','swingRange','swingWhen','backToNow','rrCard','rrHead',
+   'rrSub','progressCard','ringFill','doneCount','ofCount','statDone','statLeft','statOut','footyPct',
+   'footyLabel','quarters','gridHeading','todayPunchBtn','grid','doneBanner','doneSub','noRoster',
+   'checkDate','calTitle','cal','calPeople','peopleBar','fName','fStart','blocks','cycleSummary',
+   'presets','addBlock','removePerson','backdrop','crewSheet','crewList','crewListSettings',
+   'daySheet','daySheetTitle','dayVerdicts','dayPunchWrap','dayPunchBtn','importFile','toast','confetti']
     .forEach(function (id) { el[id] = $(id); });
 
   /* ==================== dates ==================== */
@@ -126,7 +126,14 @@
     return t === 'days' || t === 'nights';
   }
   function isFlyIn(p, d) { return isOn(p, d) && !isOn(p, addDays(d, -1)); }
-  function isFlyOut(p, d) { return isOn(p, d) && !isOn(p, addDays(d, 1)); }
+  /* You work through to the last day on and travel home the next morning, so the
+     fly-out day is the first day of R&R — which puts it on the same weekday as
+     the fly-in whenever the swing is a whole number of weeks. */
+  function isFlyOut(p, d) { return !isOn(p, d) && isOn(p, addDays(d, -1)); }
+  function flyOutDate(p, swing) {
+    var d = addDays(swing.end, 1);
+    return isOn(p, d) ? null : d;
+  }
 
   /* The whole swing containing a date — a run of on-days, day and night blocks
      together, bounded by R&R on both sides. */
@@ -179,6 +186,26 @@
     var n = 0;
     for (var i = 0; i < swing.len; i++) if (p.punches[toISO(addDays(swing.start, i))]) n++;
     return n;
+  }
+
+  /* Four 20-minute quarters. Each punched day advances the clock by 80/len
+     minutes, so half time lands the day you are halfway home. */
+  function footy(done, total) {
+    var f = total > 0 ? done / total : 0;
+    var mins = f * 80;
+    var eps = 1e-9;
+    var label;
+
+    if (done <= 0) label = 'First bounce';
+    else if (f >= 1 - eps) label = 'Full time — final siren';
+    else if (Math.abs(f - 0.25) < eps) label = 'Quarter time';
+    else if (Math.abs(f - 0.5) < eps) label = 'Half time';
+    else if (Math.abs(f - 0.75) < eps) label = 'Three-quarter time';
+    else {
+      var q = Math.min(3, Math.floor(f * 4));
+      label = 'Q' + (q + 1) + ' · ' + Math.round(mins - q * 20) + ' min';
+    }
+    return { f: f, pct: Math.round(f * 100), label: label, done: f >= 1 - eps };
   }
 
   function nextChange(p, date) {
@@ -265,20 +292,20 @@
     var p = active();
     if (!p) return;
 
-    el.crewDot.style.background = colorOf(p);
-    el.barTitle.textContent = p.name;
+    el.pillDot.style.background = colorOf(p);
+    el.pillName.textContent = p.name;
 
     var b = blockAt(p, today);
     if (!b) {
-      el.barSub.textContent = 'No cycle set';
+      el.pillStatus.textContent = 'No cycle set';
     } else if (b.type === 'off') {
       var n = nextSwing(p, today);
-      el.barSub.textContent = n
-        ? 'R&R — fly in ' + fmtMed(n.start) + ', ' + plural(diffDays(today, n.start), 'day')
+      el.pillStatus.textContent = n
+        ? 'R&R · fly in ' + fmtMed(n.start)
         : 'R&R';
     } else {
       var sw = swingAt(p, today);
-      el.barSub.textContent = 'Day ' + (diffDays(sw.start, today) + 1) + ' of ' + sw.len +
+      el.pillStatus.textContent = 'Day ' + (diffDays(sw.start, today) + 1) + ' of ' + sw.len +
         ' · ' + (b.type === 'nights' ? 'nights' : 'days');
     }
 
@@ -318,13 +345,14 @@
         + ' — ' + plural(s.len, 'day');
 
     /* R&R hero, only when today really is a day off and we're looking at what's next */
+    var out = flyOutDate(p, s);
     var offNow = v.mode === 'next';
     el.rrCard.hidden = !offNow;
     if (offNow) {
       var away = diffDays(today, s.start);
       el.rrHead.textContent = away === 0 ? 'Fly in today' : 'Fly in ' + fmtMed(s.start);
       el.rrSub.textContent = (away === 1 ? 'Tomorrow' : plural(away, 'day') + ' to go') +
-        ' · next swing is ' + plural(s.len, 'day') + ', home ' + fmtMed(s.end);
+        ' · next swing is ' + plural(s.len, 'day') + ', home ' + fmtMed(out || s.end);
     }
 
     el.doneCount.textContent = done;
@@ -333,10 +361,15 @@
     el.ringFill.classList.toggle('complete', complete);
     el.statDone.textContent = plural(done, 'day');
     el.statLeft.textContent = complete ? 'None — done' : plural(left, 'day');
-    el.statOut.textContent = fmtMed(s.end);
+    el.statOut.textContent = out ? fmtMed(out) : fmtMed(s.end);
+
+    renderFooty(done, s.len);
 
     el.doneBanner.hidden = !complete;
-    if (complete) el.doneSub.textContent = 'All ' + s.len + ' days punched. Home ' + fmtMed(s.end) + '.';
+    if (complete) {
+      el.doneSub.textContent = 'All ' + s.len + ' days punched. ' +
+        (out ? 'Home ' + fmtMed(out) + '.' : 'Straight into the next one.');
+    }
 
     var todayIdx = isNow ? diffDays(s.start, today) : -1;
     el.todayPunchBtn.hidden = todayIdx < 0;
@@ -345,7 +378,27 @@
     }
 
     el.gridHeading.textContent = describeCycleRun(p, s);
-    renderGrid(p, s, todayIdx);
+    renderGrid(p, s, todayIdx, out);
+  }
+
+  function renderFooty(done, total) {
+    var g = footy(done, total);
+    el.footyPct.textContent = g.pct + '%';
+    el.footyLabel.textContent = g.label;
+    el.footyLabel.classList.toggle('siren', g.done);
+
+    if (!el.quarters.children.length) {
+      for (var q = 0; q < 4; q++) {
+        var bar = document.createElement('i');
+        bar.appendChild(document.createElement('b'));
+        el.quarters.appendChild(bar);
+      }
+    }
+    for (var i = 0; i < 4; i++) {
+      var fill = clamp((g.f - i * 0.25) / 0.25, 0, 1);
+      el.quarters.children[i].firstChild.style.width = (fill * 100) + '%';
+      el.quarters.children[i].classList.toggle('full', g.done);
+    }
   }
 
   /* "7 days + 7 nights" for a mixed swing, "14 days" for a plain one */
@@ -361,7 +414,7 @@
     }).join(' + ');
   }
 
-  function renderGrid(p, s, todayIdx) {
+  function renderGrid(p, s, todayIdx, out) {
     var frag = document.createDocumentFragment();
 
     for (var i = 0; i < s.len; i++) {
@@ -373,10 +426,10 @@
       cell.className = 'day t-' + t + (on ? ' punched' : '') + (i === todayIdx ? ' today' : '');
       cell.dataset.iso = iso;
 
-      var flyIn = i === 0, flyOut = i === s.len - 1;
+      var flyIn = i === 0;
       var sub = i === todayIdx ? 'Today' : fmtShort(d);
       var aria = 'Day ' + (i + 1) + ', ' + fmtLong(d) + ', ' + TYPES[t].label +
-        (flyIn ? ', fly in' : '') + (flyOut ? ', fly out' : '') + (on ? ', punched' : '');
+        (flyIn ? ', fly in' : '') + (on ? ', punched' : '');
       cell.setAttribute('aria-label', aria);
       cell.setAttribute('aria-pressed', on ? 'true' : 'false');
 
@@ -385,10 +438,24 @@
         '<span class="n">' + (i + 1) + '</span>' +
         '<span class="d">' + sub + '</span>' +
         (flyIn ? '<span class="plane" title="Fly in">✈</span>' : '') +
-        (flyOut ? '<span class="plane out" title="Fly out">✈</span>' : '') +
         '<span class="mark"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg></span>';
 
       frag.appendChild(cell);
+    }
+
+    /* the travel day itself: not a work day, so it sits outside the count */
+    if (out) {
+      var t2 = document.createElement('button');
+      t2.type = 'button';
+      t2.className = 'day travel' + (diffDays(today, out) === 0 ? ' today' : '');
+      t2.dataset.iso = toISO(out);
+      t2.setAttribute('aria-label', 'Fly out, ' + fmtLong(out));
+      t2.innerHTML =
+        '<span class="edge"></span>' +
+        '<span class="n">✈</span>' +
+        '<span class="cap">Fly out</span>' +
+        '<span class="d">' + fmtShort(out) + '</span>';
+      frag.appendChild(t2);
     }
 
     el.grid.innerHTML = '';
@@ -456,11 +523,7 @@
       for (var j = 0; j < crew.length; j++) {
         var p = crew[j], b = blockAt(p, d);
         if (!b) continue;
-        var mark = '';
-        if (b.type !== 'off') {
-          if (isFlyIn(p, d)) mark = '✈';
-          else if (isFlyOut(p, d)) mark = '✈';
-        }
+        var mark = (isFlyIn(p, d) || isFlyOut(p, d)) ? '✈' : '';
         var face = multi ? (p.name || '?').trim().charAt(0).toUpperCase() : TYPES[b.type].short;
         var tick = (p === act && p.punches[iso]) ? '<span class="tick">✓</span>' : '';
         html += '<span class="strip ' + b.type + '">' + (mark ? mark + ' ' : '') + esc(face) + tick + '</span>';
@@ -497,12 +560,13 @@
 
       var bits = [];
       if (b.type === 'off') {
+        if (isFlyOut(p, d)) bits.push('✈ fly out');
         bits.push('day ' + b.dayNum + ' of ' + b.of + ' off');
       } else {
         var s = swingAt(p, d);
         bits.push('Day ' + (s ? diffDays(s.start, d) + 1 : b.dayNum) + ' of ' + (s ? s.len : b.of));
         if (isFlyIn(p, d)) bits.push('✈ fly in');
-        if (isFlyOut(p, d)) bits.push('✈ fly out');
+        if (s && diffDays(d, s.end) === 0) bits.push('last day on');
         if (p.punches[iso]) bits.push('✓ punched');
       }
       var nc = nextChange(p, d);
@@ -609,10 +673,17 @@
   function renderCrew() {
     var frag = document.createDocumentFragment();
     state.people.forEach(function (p) {
-      var b = blockAt(p, today);
-      var sub = !b ? 'No cycle' : b.type === 'off'
-        ? 'R&R — day ' + b.dayNum + ' of ' + b.of
-        : TYPES[b.type].badge + ' — day ' + b.dayNum + ' of ' + b.of;
+      var b = blockAt(p, today), sub;
+      if (!b) {
+        sub = 'No cycle set';
+      } else if (b.type === 'off') {
+        var nx = nextSwing(p, today);
+        sub = nx ? 'R&R · fly in ' + fmtMed(nx.start) : 'R&R';
+      } else {
+        var sw = swingAt(p, today);
+        sub = 'Day ' + (diffDays(sw.start, today) + 1) + ' of ' + sw.len +
+          ' · ' + (b.type === 'nights' ? 'nights' : 'days');
+      }
 
       var li = document.createElement('li');
       var btn = document.createElement('button');
@@ -624,8 +695,11 @@
       li.appendChild(btn);
       frag.appendChild(li);
     });
+    var copy = frag.cloneNode(true);   /* clone first — appending empties the fragment */
     el.crewList.innerHTML = '';
     el.crewList.appendChild(frag);
+    el.crewListSettings.innerHTML = '';
+    el.crewListSettings.appendChild(copy);
   }
 
   function esc(s) {
@@ -638,7 +712,7 @@
 
   function showTab(name) {
     tab = name;
-    ['swing','calendar','roster'].forEach(function (t) {
+    ['swing','calendar','roster','settings'].forEach(function (t) {
       $('tab-' + t).hidden = t !== name;
     });
     document.querySelectorAll('.tab-btn').forEach(function (b) {
@@ -660,7 +734,6 @@
     el.backdrop.hidden = true;
     el.crewSheet.hidden = true;
     el.daySheet.hidden = true;
-    el.dataSheet.hidden = true;
     document.body.style.overflow = '';
   }
 
@@ -784,7 +857,9 @@
 
   el.grid.addEventListener('click', function (e) {
     var cell = e.target.closest('.day');
-    if (cell) togglePunch(cell.dataset.iso, cell);
+    if (!cell) return;
+    if (cell.classList.contains('travel')) openDaySheet(cell.dataset.iso);
+    else togglePunch(cell.dataset.iso, cell);
   });
 
   el.cal.addEventListener('click', function (e) {
@@ -847,8 +922,7 @@
   }
 
   el.backToNow.addEventListener('click', function () { cursorISO = null; render(); });
-  $('crewBtn').addEventListener('click', function () { renderCrew(); openSheet(el.crewSheet); });
-  $('menuBtn').addEventListener('click', function () { openSheet(el.dataSheet); });
+  el.whoPill.addEventListener('click', function () { renderCrew(); openSheet(el.crewSheet); });
   el.backdrop.addEventListener('click', closeSheets);
 
   el.fName.addEventListener('input', function () {
@@ -856,8 +930,9 @@
     if (!p) return;
     p.name = el.fName.value.slice(0, 24);
     save();
-    el.barTitle.textContent = p.name;
+    el.pillName.textContent = p.name;
     renderPeopleBar();
+    renderCrew();
     renderCalendar();
   });
 

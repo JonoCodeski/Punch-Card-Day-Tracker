@@ -17,10 +17,22 @@ attached to the dates you actually worked.
 
 ### Swing tab
 The swing you're in right now, as a grid of tap-to-punch days. Each day shows its
-real date and shift colour, day 1 is marked ✈ fly in, the last day ✈ fly out. A ring
-tracks your progress, and the last punch of a swing sets off the confetti. Arrows step
-back and forward through swings for anything you forgot to tick. On R&R it flips to a
-countdown to your next fly-in and shows the coming swing.
+real date and shift colour, and day 1 is marked ✈ fly in. A ring tracks your progress,
+and the last punch of a swing sets off the confetti. Arrows step back and forward
+through swings for anything you forgot to tick. On R&R it flips to a countdown to your
+next fly-in and shows the coming swing. The name pill at the top switches person.
+
+**Travel days.** You fly in on day 1 and work through to the last day on, then travel
+home the next morning — so the fly-out day is the first day of R&R, not the last day
+of work. It gets its own green ✈ tile after the grid and doesn't count toward the
+punch total. On a whole number of weeks this puts fly-out on the same weekday as
+fly-in: a Monday fly-in on a 14-day swing works Monday to Sunday and flies out the
+following Monday.
+
+**Footy progress.** Under the ring, your swing is also shown as a percentage and as
+an AFL game — four 20-minute quarters, with each punched day advancing the clock by
+80/length minutes. Half time lands on the day you're halfway home; the final siren
+sounds when the swing is done.
 
 ### Calendar tab
 A month at a glance for everyone you've added — ochre day shifts, indigo nights,
@@ -29,8 +41,11 @@ field, for the full rundown: who's on, which day of the swing, and what changes 
 
 ### Roster tab
 Name, fly-in date, and the block builder, plus one-tap presets for the usual
-rosters (14:14, 14:7, 8:6, 7D:7N:14 off, 28:7 and more). Add crew here to see their
-swings beside yours on the calendar.
+rosters (14:14, 14:7, 8:6, 7D:7N:14 off, 28:7 and more).
+
+### Settings tab
+Switch or add the crew whose swings sit beside yours on the calendar, back your data
+up, and erase it.
 
 ## Files
 
